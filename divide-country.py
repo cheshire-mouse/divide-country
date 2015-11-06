@@ -9,12 +9,13 @@
 точки и линии
 На выходе: три списка идентификаторов отношений
 
-$Id$
+$Id: divide-country.py 21 2015-02-22 08:35:50Z gryphon.osm@gmail.com $
 
 license: WTFPL v.2
 '''
 
 from lxml import etree
+import sys
 import logging
 import argparse
 from collections import deque, defaultdict, OrderedDict
@@ -94,9 +95,13 @@ def readOsmFile(filename):
     result=dict()
     osmTarget=OsmTarget(result);
     parser=etree.XMLParser(target=osmTarget);
-    f=open(filename,"r");
-    etree.parse(f,parser);
-    f.close();
+    try:
+        f=open(filename,"r");
+        etree.parse(f,parser);
+        f.close();
+    except Exception as e:
+        logger.fatal("Can't parse OSM file: {}".format(e));
+        sys.exit(1);
     brokenways=[]
     for w in result["ways"]:
         for n in result["ways"][w]:
@@ -144,7 +149,7 @@ def mergeWays(ways_to_merge):
     node_count = 0
     while ( len(ends) > 0 ):
         if ( len(ends[n]) > 2 or (len(ends[n]) == 1 and w != ends[n][0]) ):
-            raise BadRingException("Can't merge ways into ring (selfintersections?)")
+            raise BadRingException("Can't merge ways into ring (selfintersection or broken ring?)")
         if ( len(ends[n]) == 1 ):
             #ring is closed, start new one (if possible)
             w = None
@@ -338,8 +343,13 @@ logger.info("read OSM file")
 osm = readOsmFile(args.file)
 logger.info("merge ways into rings and calc area")
 for k in osm["rels"]["outer"]:
-    logger.debug(k)
-    ( shapes[k], shapes_areas[k] )  = mergeWays(osm["rels"]["outer"][k])
+    logger.debug("relation {}".format(k))
+    try:
+        ( shapes[k], shapes_areas[k] )  = mergeWays(osm["rels"]["outer"][k])
+    except BadRingException as e:
+        logger.fatal("relation {}: {}".format(k, e.message))
+        sys.exit(1)
+
     logger.debug("area {:10} {:10.2f} km2".format(k,shapes_areas[k]/1000000))
 
 parts = [ list(shapes.keys()) ]
