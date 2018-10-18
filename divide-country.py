@@ -388,11 +388,11 @@ for s in islands:
 logger.info("print result")
 for p in range(0,len(parts)):
     if ( len(parts[p]) > 0 ):
-        logger.debug("part {}: {}".format(p,len(parts[p])))
-        print("{}: {}".format(p,", ".join(parts[p])))
+        logger.debug("part {}: [ {} ]".format(p,len(parts[p])))
+        print("{}: [ {} ]".format(p+1,", ".join(parts[p])))
 if ( len(islands) > 0 ):
-    logger.debug("islands: {}".format(p,len(islands)))
-    print("islands: {}".format(", ".join(islands)))
+    logger.debug("islands: [ {} ]".format(p,len(islands)))
+    print("islands: [ {} ]".format(", ".join(islands)))
 
 logger.info("finish")
 
